@@ -1,9 +1,12 @@
 #include <WiFi.h>
 
+const int AEHA = 0;
+const int DAIKIN = 1;
+
 const char* ssid = "aterm-a1abc8-g";
 const char* pw = "0739fbe5afcfd";
 
-const int IR = 36;
+const int IR = 23;
 
 IPAddress ip(192,168,0,15);
 IPAddress gateway(192,168,0,1);
@@ -41,7 +44,16 @@ void loop() {
   // put your main code here, to run repeatedly:
   String cmd;
   cmd = recv_cmd();
+  if(cmd.length() > 0){
+    int type = getType(cmd);
+    
+    cmd = cmd.substring(cmd.indexOf(":") + 1, cmd.length() + 1);
 
+    int size = cmd.length() + 1;
+    char data[size];
+    cmd.toCharArray(data, size);
+    execute(type, data, size);
+  }
   delay(100);
 }
 
@@ -64,59 +76,33 @@ String recv_cmd(){
   return str;
 }
 
-void send_aeha_reader(){
-  digitalWrite(IR, HIGH);
-  delayMicroseconds(3400);
-  digitalWrite(IR, LOW);
-  delayMicroseconds(1700);
-}
+int getType(String str){
+  char SPLIT = ':';
+  char char_array[str.length() + 1];
+  str.toCharArray(char_array, str.length() + 1);
 
-void send_daikin_reader(){
-  int i;
-  for(i = 0; i < 5; i++){
-    low_bit();
-  }
-  delay(25);
-}
-
-void send_daikin_frame(char *cs_code, int cs_size, char *data, int d_size){
-  send_daikin_reader();
-  send_aeha_reader();
-  
-  send_bits(cs_code, cs_size);
-  delay(35);
-  send_bits(data, d_size);
-}
-
-void send_bits(char *data, int size){
-  int i;
-  for(i = 0; i < size; i++){
-    if(data[i] == '1'){
-      high_bit();
-    }else{
-      low_bit();
+  for(int i = 0; i < str.length(); i++){
+    if(char_array[i] == SPLIT){
+      return char_array[i - 1] - '0';
     }
   }
+  
+  return -1;
 }
 
-void pwm_out(){
-  uint8_t i;
-  for(i = 0; i < 12; i++){
-    digitalWrite(IR, HIGH);
-    delayMicroseconds(25);
-    digitalWrite(IR, LOW);
-    delayMicroseconds(25);
+void execute(int type, char *data, int size){
+  switch(type){
+    case AEHA:{
+      send_aeha_frame(data, size);
+      Serial.println("AEHA");
+      break; 
+    }
+    case DAIKIN:{
+      break;
+    }
+    default:{
+      break;
+    }
   }
-}
-
-void high_bit(){
-  pwm_out();
-  digitalWrite(IR, LOW);
-  delayMicroseconds(1275);
-}
-
-void low_bit(){
-  pwm_out();
-  digitalWrite(IR, LOW);
-  delayMicroseconds(425);
+  Serial.println("execute");
 }

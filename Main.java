@@ -1,12 +1,14 @@
-package sender;
-
 import java.io.ByteArrayOutputStream;
 import java.net.Socket;
 
 public class Main {
 
+	//format TYPE:DATA
 	public static void main(String[] args) {
 		// TODO 自動生成されたメソッド・スタブ
+
+		final String data = "0:010101010101101011110001010010000110100010001011";
+		//final String data = "0:101010100101101010001111000100100001011011010001";
 
 		try(var socket = new Socket("192.168.0.15", 1234);
 			var memory = new ByteArrayOutputStream();) {
@@ -14,7 +16,7 @@ public class Main {
 
 			var output = socket.getOutputStream();
 
-			output.write("test121q".getBytes());
+			output.write(data.getBytes());
 			output.flush();
 
 			var input = socket.getInputStream();
